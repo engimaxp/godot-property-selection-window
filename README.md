@@ -18,6 +18,8 @@ A powerful Godot plugin that provides an intuitive interface for selecting and m
 
 ## Features
 
+![window-preview](docs/media/window-preview.png)
+
 - **Property Tree View**: Hierarchical display of all available node properties
 - **Advanced Filtering**:
   - Search functionality with debounce for better performance
@@ -119,6 +121,8 @@ property_selector.set_property_value("position", Vector2(100, 100))
 ## Example Implementation
 
 Here's an example of how the plugin is used in the [TimeRewind2D](https://github.com/imtani/godot-time-rewind-2d/) plugin:
+
+![Time Rewind Window](docs/media/time-rewind-window.png)
 
 ```gdscript
 func _open_property_selector_window(time_rewind: Node2D) -> void:
