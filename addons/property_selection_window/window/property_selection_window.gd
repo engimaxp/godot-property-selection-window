@@ -41,7 +41,7 @@ const MAX_RECURSION_DEPTH: int = 10
 
 var _warning_popup: AcceptDialog
 var target: Node
-var initially_selected_properties: Array[String] = []
+var initially_selected_properties: Array = []
 var show_hidden_properties: bool = false
 var current_type_filter: int = 0
 var _on_properties_selected_callback: Callable
