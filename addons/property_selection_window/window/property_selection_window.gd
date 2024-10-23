@@ -1,4 +1,5 @@
 @tool
+@icon("res://addons/property_selection_window/essentials/icon.svg")
 ## A tool window for selecting and monitoring node properties in the Godot editor.
 ## Supports filtering, searching, and type-based filtering of properties.
 class_name PropertySelectionWindow
