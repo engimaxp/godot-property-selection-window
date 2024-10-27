@@ -310,39 +310,18 @@ func _get_property_safely(node: Object, property_name: String) -> Variant:
 
 func _resolve_custom_class_name(property_value: Object) -> String:
 	if not is_instance_valid(property_value):
-		return ""
-		
-	# Get the script path
+		return "Invalid Object"
+
 	var script = property_value.get_script()
 	if not script:
 		return property_value.get_class()
-		
-	var script_path = script.get_path()
-	if script_path.is_empty():
-		return property_value.get_class()
-		
-	var script_name = script_path.split("/")[-1]
-	
-	# Get the editor filesystem
-	var fs = EditorInterface.get_resource_filesystem()
-	var current_path = script_path.get_base_dir()
-	var dir = fs.get_filesystem_path(current_path)
-	
-	if not dir:
-		push_warning("Could not access directory: " + current_path)
+
+	var global_class_name = script.get_global_name()
+
+	if global_class_name == "":
 		return property_value.get_class()
 	
-	# Search for the script in the directory
-	for i in dir.get_file_count():
-		var file_name = dir.get_file(i)
-		if file_name == script_name:
-			var custom_class_name = dir.get_file_script_class_name(i)
-			if not custom_class_name.is_empty():
-				return custom_class_name
-			break
-	
-	# Fallback to base class if custom class name not found
-	return property_value.get_class()
+	return global_class_name
 
 func _create_property_tree_item(property_name: String, property_value: Variant, property_type: int, parent_item: TreeItem) -> TreeItem:
 	var child_item = properties_tree.create_item(parent_item)

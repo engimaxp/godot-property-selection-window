@@ -24,7 +24,7 @@ A powerful Godot plugin that streamlines property management with an intuitive i
 ### Advanced Filtering
 - Performance-optimized search with debouncing
 - Type-based filtering system
-  - Custom types can be defined
+  - Custom Classes are recognized
 - Toggleable engine property visibility
 
 ### Property Management
