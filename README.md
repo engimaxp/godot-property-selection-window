@@ -44,8 +44,7 @@ A powerful Godot plugin that streamlines property management with an intuitive i
 
 **Via Git**
 ```bash
-git clone https://github.com/username/property-selection-window.git
-cp -r property-selection-window/addons/property_selection_window path/to/your/project/addons/
+git clone https://github.com/ImTani/godot-property-selection-window.git
 ```
 
 **Enable the Plugin**
