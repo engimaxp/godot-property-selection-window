@@ -23,8 +23,7 @@ const HIDDEN_PROPERTIES: Array[String] = [
 	"texture_filter", "texture_repeat", "material",
 	"use_parent_material", "rotation_degrees", "skew",
 	"transform", "global_rotation_degrees", "global_skew",
-	"global_transform", "resource_local_to_scene", "resource_name",
-	"resource_path", "resource_scene_unique_id",]
+	"global_transform"]
 
 const WINDOW_SCENE: PackedScene = preload("PropertySelectionWindow.tscn")
 const NO_TARGET_ERROR_MESSAGE: String = "No target node assigned. Please assign a target node."
@@ -50,28 +49,16 @@ var _on_properties_selected_callback: Callable
 var _visited_objects: Dictionary = {}
 var _current_recursion_depth: int = 0
 
-enum CUSTOM_PROPERTY_TYPES {
-	RESOURCE = 1000,
-}
-
-var CUSTOM_TYPE_INFO = {
-	CUSTOM_PROPERTY_TYPES.RESOURCE: {
-		"name": "Resource",
-		"icon": "Resource",
-		"check": func(value): return value is Resource
-	},
-}
-
-var TYPE_FILTER_OPTIONS: Dictionary = {
-    0: "All Types",
-    TYPE_BOOL: "Boolean",
-    TYPE_INT: "Integer",
-    TYPE_FLOAT: "Float",
-    TYPE_STRING: "String",
-    TYPE_VECTOR2: "Vector2",
-    TYPE_VECTOR3: "Vector3",
-    TYPE_COLOR: "Color",
-    TYPE_OBJECT: "Object"
+const TYPE_FILTER_OPTIONS = {
+	0: "All Types",
+	TYPE_BOOL: "Boolean",
+	TYPE_INT: "Integer",
+	TYPE_FLOAT: "Float",
+	TYPE_STRING: "String",
+	TYPE_VECTOR2: "Vector2",
+	TYPE_VECTOR3: "Vector3",
+	TYPE_COLOR: "Color",
+	TYPE_OBJECT: "Object",
 }
 
 # Caching
@@ -87,9 +74,6 @@ func create_window(target: Node, initially_selected_properties: Array = [], show
 	EditorInterface.popup_dialog_centered(window)
 
 func _ready() -> void:
-	for custom_type in CUSTOM_TYPE_INFO:
-		TYPE_FILTER_OPTIONS[custom_type] = CUSTOM_TYPE_INFO[custom_type].name
-	
 	_visited_objects.clear()
 	_current_recursion_depth = 0
 	_initialize_properties_tree()
@@ -244,12 +228,6 @@ func _get_filtered_properties(node: Object) -> Array[Dictionary]:
 func _passes_type_filter(property: Dictionary) -> bool:
 	if current_type_filter in [-1, 0]:  # No filter
 		return true
-		
-	# Check if it's a custom type filter
-	if current_type_filter in CUSTOM_TYPE_INFO:
-		var value = _get_property_safely(target, property.name)
-		return CUSTOM_TYPE_INFO[current_type_filter].check.call(value)
-		
 	return property.type == current_type_filter
 
 func _add_properties_to_tree(properties: Array[Dictionary], node: Object, item: TreeItem, filter: String) -> void:
@@ -279,7 +257,7 @@ func _add_properties_to_tree(properties: Array[Dictionary], node: Object, item: 
 					child_item.visible = false
 				_check_initially_selected_property(child_item, property_name)
 
-func _get_property_safely(node: Object, property_name: String) -> Variant:
+static func _get_property_safely(node: Object, property_name: String) -> Variant:
 	if not is_instance_valid(node):
 		push_warning("Attempted to get property from invalid node: " + property_name)
 		return null
@@ -308,58 +286,20 @@ func _get_property_safely(node: Object, property_name: String) -> Variant:
 	push_warning("Unable to get property: " + property_name)
 	return null
 
-func _resolve_custom_class_name(property_value: Object) -> String:
-	if not is_instance_valid(property_value):
-		return "Invalid Object"
-
-	var script = property_value.get_script()
-	if not script:
-		return property_value.get_class()
-
-	var global_class_name = script.get_global_name()
-
-	if global_class_name == "":
-		return property_value.get_class()
-	
-	return global_class_name
-
 func _create_property_tree_item(property_name: String, property_value: Variant, property_type: int, parent_item: TreeItem) -> TreeItem:
 	var child_item = properties_tree.create_item(parent_item)
-	var child_type: String
-	var child_icon: Texture2D
-	
-	# Check for Object types (including custom types and resources)
-	if property_type == TYPE_OBJECT and property_value != null:
-		# Resolve the actual class name for any object type
-		child_type = _resolve_custom_class_name(property_value)
-		
-		# Try to get icon for the resolved class name first
-		child_icon = _get_theme_icon_safely(child_type, EDITOR_ICON_CATEGORY)
-		
-		# Fall back to base class icon if needed
-		if child_icon == null:
-			var base_class = property_value.get_class()
-			child_icon = _get_theme_icon_safely(base_class, EDITOR_ICON_CATEGORY)
-			
-		# Check custom type info for additional processing
-		for type_id in CUSTOM_TYPE_INFO:
-			if CUSTOM_TYPE_INFO[type_id].check.call(property_value):
-				# Use the resolved class name but keep custom type handling
-				if child_icon == null:
-					child_icon = _get_theme_icon_safely(CUSTOM_TYPE_INFO[type_id].icon, EDITOR_ICON_CATEGORY)
-				break
-	else:
-		# Handle non-object types as before
-		child_type = type_string(property_type)
-		child_icon = _get_theme_icon_safely(child_type, EDITOR_ICON_CATEGORY)
+	var child_type: String = type_string(property_type)
+	var child_icon: Texture2D = _get_theme_icon_safely(child_type, EDITOR_ICON_CATEGORY)
 
-	# Set up the tree item
 	child_item.set_cell_mode(0, TreeItem.CELL_MODE_CHECK)
 	child_item.set_editable(0, true)
 	child_item.set_text(0, property_name)
 	child_item.set_tooltip_text(0, _get_full_property_name(child_item))
 	child_item.set_icon(0, child_icon)
+
 	child_item.set_text(1, child_type)
+	
+	# Set the property value in the third column
 	child_item.set_text(2, _format_property_value(property_value, property_type))
 
 	return child_item
@@ -381,9 +321,7 @@ func _format_property_value(value: Variant, type: int) -> String:
 		TYPE_OBJECT:
 			if value == null:
 				return "null"
-			# Use the resolved class name for object types
-			var custom_class_name = _resolve_custom_class_name(value) if value is Object else value.get_class()
-			return "[%s:%s]" % [custom_class_name, value.get_instance_id()]
+			return "[%s:%s]" % [value.get_class(), value.get_instance_id()]
 		_:
 			return str(value)
 
